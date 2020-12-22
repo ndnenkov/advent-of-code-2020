@@ -1,4 +1,4 @@
-BAGS = <<~MAP.split("\n")
+INPUT = <<~MAP.split("\n")
 striped_white_bag CONTAIN drab_silver_bag(4)
 drab_silver_bag CONTAIN no_other_bag
 pale_plum_bag CONTAIN dark_black_bag(1)
@@ -595,7 +595,7 @@ light_black_bag CONTAIN striped_yellow_bag(1)
 muted_white_bag CONTAIN muted_tomato_bag(3), light_black_bag(5), pale_black_bag(4), shiny_gold_bag(5)
 MAP
 
-# BAGS = <<~TEXT.split("\n")
+# INPUT = <<~TEXT.split("\n")
 # light_red_bag CONTAIN bright_white_bag(1), muted_yellow_bag(2)
 # dark_orange_bag CONTAIN bright_white_bag(3), muted_yellow_bag(4)
 # bright_white_bag CONTAIN shiny_gold_bag(1)
@@ -607,27 +607,20 @@ MAP
 # dotted_black_bag CONTAIN no_other_bag
 # TEXT
 
-FORWARD_TREE = {}
-# BACKWARD_TREE = {}
-BAGS.each do |bag|
-  container, *list = bag.sub('CONTAIN', '').gsub(/\(\d+\)/, '').tr(',', '').split(' ')
+BAGS = INPUT.map do |bag|
+  container, *contents = bag.sub('CONTAIN', '').gsub(/\(\d+\)/, '').delete(',').split
 
-  FORWARD_TREE[container] = list
-end
+  [container, contents]
+end.to_h
 
 def find(container, item)
-  return false if container == 'no_other_bag' || !FORWARD_TREE[container]
+  return false if container == 'no_other_bag' || !BAGS[container]
 
-  if FORWARD_TREE[container].include?(item)
+  if BAGS[container].include?(item)
     true
   else
-    FORWARD_TREE[container].map { |sub_container| find(sub_container, item) }.reduce(:|)
+    BAGS[container].map { |sub_container| find(sub_container, item) }.reduce(:|)
   end
 end
 
-puts FORWARD_TREE
-puts FORWARD_TREE.count { |key, _| find(key, 'shiny_gold_bag') }
-
-
-
-
+puts BAGS.keys.count { |container| find(container, 'shiny_gold_bag') }

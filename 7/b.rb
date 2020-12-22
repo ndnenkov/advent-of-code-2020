@@ -1,4 +1,4 @@
-BAGS = <<~MAP.split("\n")
+INPUT = <<~TEXT.split("\n")
 striped_white_bag CONTAIN drab_silver_bag(4)
 drab_silver_bag CONTAIN no_other_bag
 pale_plum_bag CONTAIN dark_black_bag(1)
@@ -593,21 +593,9 @@ striped_silver_bag CONTAIN clear_orange_bag(5), dotted_fuchsia_bag(2)
 clear_cyan_bag CONTAIN muted_gray_bag(5), wavy_aqua_bag(3)
 light_black_bag CONTAIN striped_yellow_bag(1)
 muted_white_bag CONTAIN muted_tomato_bag(3), light_black_bag(5), pale_black_bag(4), shiny_gold_bag(5)
-MAP
+TEXT
 
-# BAGS = <<~TEXT.split("\n")
-# light_red_bag CONTAIN bright_white_bag(1), muted_yellow_bag(2)
-# dark_orange_bag CONTAIN bright_white_bag(3), muted_yellow_bag(4)
-# bright_white_bag CONTAIN shiny_gold_bag(1)
-# muted_yellow_bag CONTAIN shiny_gold_bag(2), faded_blue_bag(9)
-# shiny_gold_bag CONTAIN dark_olive_bag(1), vibrant_plum_bag(2)
-# dark_olive_bag CONTAIN faded_blue_bag(3), dotted_black_bag(4)
-# vibrant_plum_bag CONTAIN faded_blue_bag(5), dotted_black_bag(6)
-# faded_blue_bag CONTAIN no_other_bag
-# dotted_black_bag CONTAIN no_other_bag
-# TEXT
-
-# BAGS = <<~TEXT.split("\n")
+# INPUT = <<~TEXT.split("\n")
 # shiny_gold_bag CONTAIN dark_red_bag(2)
 # dark_red_bag CONTAIN dark_orange_bag(2)
 # dark_orange_bag CONTAIN dark_yellow_bag(2)
@@ -617,31 +605,25 @@ MAP
 # dark_violet_bag CONTAIN no_other_bag
 # TEXT
 
-FORWARD_TREE = {}
-# BACKWARD_TREE = {}
-BAGS.each do |bag|
-  container, *list = bag.sub('CONTAIN', '').tr(',', '').split(' ')
-  # p list
-  hash = list.map do |x|
-    if x == 'no_other_bag'
+BAGS = INPUT.map do |bag|
+  container, *contents = bag.sub('CONTAIN', '').delete(',').split
+
+  contents_counts = contents.map do |content|
+    if content == 'no_other_bag'
       ['no_other_bag', 0]
     else
-      a, c = x.tr(')', '').split('(')
-      [a, c.to_i]
+      bag_name, bag_count = content.delete(')').split('(')
+      [bag_name, bag_count.to_i]
     end
   end.to_h
 
-  FORWARD_TREE[container] = hash
-end
+  [container, contents_counts]
+end.to_h
 
 def sum(container)
   return 0 if container == 'no_other_bag'
 
-  # puts container unless FORWARD_TREE[container]
-  FORWARD_TREE[container].map do |key, count|
-    # p "#{key}: #{count} * #{sum(key)}"
-    count * sum(key) + count
-  end.reduce(:+)
+  BAGS[container].map { |content, count| count * sum(content) + count }.reduce(:+)
 end
-puts FORWARD_TREE
+
 puts sum('shiny_gold_bag')
