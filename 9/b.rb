@@ -1001,19 +1001,36 @@ NUMBERS = <<~TEXT.split("\n").map(&:to_i)
 57812792009627
 TEXT
 
+# NUMBERS = <<~TEXT.split("\n").map(&:to_i)
+# 35
+# 20
+# 15
+# 25
+# 47
+# 40
+# 62
+# 55
+# 65
+# 95
+# 102
+# 117
+# 150
+# 182
+# 127
+# 219
+# 299
+# 277
+# 309
+# 576
+# TEXT
+
 TO_FIND = 556543474
 
-
 2.upto(NUMBERS.size).each do |size|
-  combo =
-  NUMBERS.each_cons(size).lazy.find do |combo|
-    combo.sum == TO_FIND
-  end
+  slice = NUMBERS.each_cons(size).lazy.find { |slice| slice.sum == TO_FIND }
 
-  if combo
-    puts combo.minmax.sum
+  if slice
+    puts slice.minmax.sum
     break
   end
 end
-
-

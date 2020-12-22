@@ -1025,19 +1025,16 @@ TEXT
 # TEXT
 
 index = 0
-pre = NUMBERS.take(25).combination(2).map(&:sum)
+preamble = NUMBERS.take(25).combination(2).map(&:sum)
 NUMBERS.drop(25).find do |number|
-  p pre
-  if pre.include?(number)
+  if preamble.include?(number)
     index += 1
-    pre = NUMBERS[index...([index + 25, NUMBERS.size].min)].combination(2).map(&:sum)
-    # pre = pre.map { |sum| sum - NUMBERS[index] + number }
+    until_index = [index + 25, NUMBERS.size].min
+    preamble = NUMBERS[index...until_index].combination(2).map(&:sum)
   else
     puts number
     break
   end
+
   false
 end
-
-
-
