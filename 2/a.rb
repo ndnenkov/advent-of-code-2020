@@ -1001,6 +1001,12 @@ PASSWORD_ENTRIES = <<~TEXT
 5-6 g: rvfgnggjgk
 TEXT
 
+# PASSWORD_ENTRIES = <<~TEXT
+# 1-3 a: abcde
+# 1-3 b: cdefg
+# 2-9 c: ccccccccc
+# TEXT
+
 count =
   PASSWORD_ENTRIES.split("\n").count do |password_entry|
     min, max, letter, password = password_entry.match(/(\d+)-(\d+) (\w): (\w+)/).captures

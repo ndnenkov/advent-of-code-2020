@@ -1,4 +1,4 @@
-BOARDING_PASSES = <<~MAP.split("\n")
+BOARDING_PASSES = <<~TEXT.split("\n")
 BFBBBBBLLR
 BBFFBBFRRL
 FBFBFFFRRL
@@ -959,12 +959,10 @@ FFBBFBFRLR
 BFFBFBBRLL
 BFBFBFFRRR
 FBBFFFBRLL
-MAP
+TEXT
 
 seat_ids = BOARDING_PASSES.map { |pass| pass.tr('FBLR', '0101').to_i(2) }
-lookup_ragnge = 0.upto(1025).to_a - seat_ids 
-my_seat_id =
-lookup_ragnge.find do |a|
-  ([a + 1, a - 1] - seat_ids).empty?
-end
-puts my_seat_id
+lookup_range = 1.upto(1023).to_a - seat_ids
+seat_id = lookup_range.find { |seat_id| ([seat_id + 1, seat_id - 1] - seat_ids).empty? }
+
+puts seat_id

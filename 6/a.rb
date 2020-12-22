@@ -1,4 +1,4 @@
-ANSWERS = <<~MAP.split("\n\n")
+ANSWERS = <<~TEXT.split("\n\n")
 rypdeiqkbgacnxwumhtozfjvs
 mhrqdwtxcfjuseknozipayvbg
 gunjdtebovsyihraczkmqxfpw
@@ -2196,6 +2196,24 @@ nsi
 vlsig
 ins
 si
-MAP
+TEXT
 
-puts ANSWERS.sum { |an| an.gsub(/\s/, '').chars.uniq.count }
+# ANSWERS = <<~TEXT.split("\n\n")
+# abc
+
+# a
+# b
+# c
+
+# ab
+# ac
+
+# a
+# a
+# a
+# a
+
+# b
+# TEXT
+
+puts ANSWERS.sum { |answer| answer.delete("\n").chars.uniq.count }

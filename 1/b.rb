@@ -201,4 +201,6 @@ AMOUNTS = [
   1769,
 ]
 
+# AMOUNTS = [1721, 979, 366, 299, 675, 1456]
+
 puts AMOUNTS.combination(3).lazy.find { |x, y, z| x + y + z == 2020 }.reduce(:*)

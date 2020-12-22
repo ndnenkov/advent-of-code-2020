@@ -1,4 +1,4 @@
-ANSWERS = <<~MAP.split("\n\n")
+ANSWERS = <<~TEXT.split("\n\n")
 rypdeiqkbgacnxwumhtozfjvs
 mhrqdwtxcfjuseknozipayvbg
 gunjdtebovsyihraczkmqxfpw
@@ -2196,10 +2196,28 @@ nsi
 vlsig
 ins
 si
-MAP
+TEXT
 
-res = ANSWERS.map do |an|
-  an.split("\n").map {|x| x.gsub(/\s/, '').chars.uniq }.reduce(:&)
-end.sum(&:size)
+# ANSWERS = <<~TEXT.split("\n\n")
+# abc
 
-puts res
+# a
+# b
+# c
+
+# ab
+# ac
+
+# a
+# a
+# a
+# a
+
+# b
+# TEXT
+
+agreement_counts_sum = ANSWERS.sum do |answer|
+  answer.split("\n").map { |person_answer| person_answer.chars.uniq }.reduce(:&).size
+end
+
+puts agreement_counts_sum

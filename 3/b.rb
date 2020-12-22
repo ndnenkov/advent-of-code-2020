@@ -324,9 +324,23 @@ TREE_MAP = <<~MAP.split("\n").map(&:chars)
 .....#......#..#...#.#.....#...
 MAP
 
+# TREE_MAP = <<~MAP.split("\n").map(&:chars)
+# ..##.......
+# #...#...#..
+# .#....#..#.
+# ..#.#...#.#
+# .#...##..#.
+# ..#.##.....
+# .#.#.#....#
+# .#........#
+# #.##...#...
+# #...##....#
+# .#..#...#.#
+# MAP
+
 SLOPES = [[1, 1], [3, 1], [5, 1], [7, 1], [1, 2]]
 
-encountered_trees_product =
+encountered_trees =
   SLOPES.map do |x_slope, y_slope|
     x = 0
     y = 0
@@ -338,6 +352,6 @@ encountered_trees_product =
     end
 
     tree_count
-  end.reduce(:*)
+  end
 
-puts encountered_trees_product
+puts encountered_trees.reduce(:*)

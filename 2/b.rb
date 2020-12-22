@@ -1001,10 +1001,16 @@ PASSWORD_ENTRIES = <<~TEXT
 5-6 g: rvfgnggjgk
 TEXT
 
+# PASSWORD_ENTRIES = <<~TEXT
+# 1-3 a: abcde
+# 1-3 b: cdefg
+# 2-9 c: ccccccccc
+# TEXT
+
 count =
   PASSWORD_ENTRIES.split("\n").count do |password_entry|
-    first, second, letter, password = password_entry.match(/(\d+)-(\d+) (\w): (\w+)/).captures
-    (password[first.to_i.pred] == letter) ^ (password[second.to_i.pred] == letter)
+    first_position, second, letter, password = password_entry.match(/(\d+)-(\d+) (\w): (\w+)/).captures
+    (password[first_position.to_i.pred] == letter) ^ (password[second.to_i.pred] == letter)
   end
 
 puts count
