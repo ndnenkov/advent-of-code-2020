@@ -655,28 +655,38 @@ acc +44
 jmp +1
 TEXT
 
+# PROGRAM = <<~TEXT.split("\n")
+# nop +0
+# acc +1
+# jmp +4
+# acc +3
+# jmp -3
+# acc -99
+# acc +1
+# jmp -4
+# acc +6
+# TEXT
+
 visited = []
-acc = 0
+accumulator = 0
 index = 0
+
 loop do
-  instr = PROGRAM[index]
+  instruction, value = PROGRAM[index].split
+
   if visited.include?(index)
-    puts acc.to_s 
+    puts accumulator.to_s
     break
   end
 
   visited.push index
-  instruction, value = instr.split
 
   if instruction == 'acc'
-    acc += value.to_i
+    accumulator += value.to_i
     index += 1
-    # eval("acc = acc #{value}")
   elsif instruction == 'jmp'
     index += value.to_i
-    # eval("index = index #{value}")
   elsif instruction == 'nop'
     index += 1
   end
-  # puts "#{acc}, #{index}, #{visited}"
 end

@@ -655,6 +655,18 @@ acc +44
 jmp +1
 TEXT
 
+# PROGRAM = <<~TEXT.split("\n")
+# nop +0
+# acc +1
+# jmp +4
+# acc +3
+# jmp -3
+# acc -99
+# acc +1
+# jmp -4
+# acc +6
+# TEXT
+
 variations = []
 PROGRAM.each_with_index do |row, index|
   if row.start_with?('jmp')
@@ -669,13 +681,13 @@ PROGRAM.each_with_index do |row, index|
 end
 
 def execute(program)
-  visited_indices = []
+  visited = []
   accumulator = 0
   index = 0
 
   loop do
     # Endless loop
-    break unless visited_indices.uniq == visited_indices
+    break unless visited.uniq == visited
 
     # End of program or Invalid program jump
     break if index >= program.size
@@ -685,20 +697,21 @@ def execute(program)
     # Parse
     instruction, value = program[index].split
 
+    visited.push index
+
     # Execute
     case instruction
     when 'acc'
       accumulator += value.to_i
+      index += 1
     when 'jmp'
-      index += value.to_i - 1
+      index += value.to_i
     when 'nop'
+      index += 1
     end
-
-    visited_indices.push index
-    index += 1
   end
 
-  [accumulator, visited_indices.uniq == visited_indices]
+  [accumulator, visited.uniq == visited]
 end
 
 variations.each do |variation|
