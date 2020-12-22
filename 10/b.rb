@@ -1,4 +1,4 @@
-WOLTAGES = <<~TEXT.split("\n").map(&:to_i)
+JOLTAGES = <<~TEXT.split("\n").map(&:to_i)
 118
 14
 98
@@ -99,58 +99,52 @@ WOLTAGES = <<~TEXT.split("\n").map(&:to_i)
 86
 TEXT
 
-WOLTAGES = <<~TEXT.split("\n").map(&:to_i)
-28
-33
-18
-42
-31
-14
-46
-20
-48
-47
-24
-23
-49
-45
-19
-38
-39
-11
-1
-32
-25
-35
-8
-17
-7
-9
-4
-2
-34
-10
-3
-TEXT
+# JOLTAGES = <<~TEXT.split("\n").map(&:to_i)
+# 28
+# 33
+# 18
+# 42
+# 31
+# 14
+# 46
+# 20
+# 48
+# 47
+# 24
+# 23
+# 49
+# 45
+# 19
+# 38
+# 39
+# 11
+# 1
+# 32
+# 25
+# 35
+# 8
+# 17
+# 7
+# 9
+# 4
+# 2
+# 34
+# 10
+# 3
+# TEXT
 
-WOLTAGES.sort!
+joltage_chain = [0] + JOLTAGES.sort
+arrangement_counts = [1]
 
-WOLTAGES = [0] + WOLTAGES
-PATHS = [1]
-WOLTAGES.each_with_index do |wolt, index|
-  indis = [index - 3, index - 2, index - 1].select {|i| i >= 0}.select {|i| wolt - WOLTAGES[i] <= 3}
+joltage_chain.each_with_index do |joltage, index|
   next if index.zero?
-  PATHS[index] = indis.sum {|i| PATHS[i] }
+
+  candidate_indices =
+    [index - 3, index - 2, index - 1].
+      reject(&:negative?).
+      select { |index| joltage - joltage_chain[index] <= 3 }
+
+  arrangement_counts[index] = candidate_indices.sum { |index| arrangement_counts[index] }
 end
-p PATHS.last
 
-
-
-
-
-
-
-
-
-
-
+puts arrangement_counts.last

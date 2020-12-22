@@ -1,4 +1,4 @@
-WOLTAGES = <<~TEXT.split("\n").map(&:to_i)
+JOLTAGES = <<~TEXT.split("\n").map(&:to_i)
 118
 14
 98
@@ -99,33 +99,47 @@ WOLTAGES = <<~TEXT.split("\n").map(&:to_i)
 86
 TEXT
 
-# WOLTAGES = <<~TEXT.split("\n").map(&:to_i)
-# 16
-# 10
-# 15
-# 5
-# 1
-# 11
-# 7
+# JOLTAGES = <<~TEXT.split("\n").map(&:to_i)
+# 28
+# 33
+# 18
+# 42
+# 31
+# 14
+# 46
+# 20
+# 48
+# 47
+# 24
+# 23
+# 49
+# 45
 # 19
-# 6
-# 12
+# 38
+# 39
+# 11
+# 1
+# 32
+# 25
+# 35
+# 8
+# 17
+# 7
+# 9
 # 4
+# 2
+# 34
+# 10
+# 3
 # TEXT
 
 ones = 1
-twos = 0
 threes = 1
-WOLTAGES.sort.each_cons(2).map do |x, y|
-  case y - x
-  when 1
-    then ones += 1
-  when 2
-    then twos += 1
-  when 3
-    then threes += 1
+JOLTAGES.sort.each_cons(2).map do |first_joltage, second_joltage|
+  case second_joltage - first_joltage
+  when 1 then ones += 1
+  when 3 then threes += 1
   end
 end
-puts threes * ones
-puts "#{threes} x #{ones}"
 
+puts threes * ones
