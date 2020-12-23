@@ -1,4 +1,4 @@
-MAP = <<~TEXT.split("\n").map {|x| x.chars}
+MAP = <<~TEXT.split("\n").map(&:chars)
 LLLLLLLLL.LLLLL.LLLLL.LLLL.LLLLLL.LL.LLLLLLLLLLLLL.LLLLLL.LLLLLLLLLLLLLLL.LLLL.LLLL.LLLL.LLLLL
 LLLLLLLLL.LLLLL.LLLLL.LLLLLLLL.LLLLL.LLLLLLLLLLLLL.LLLLLLLLLLLLLLLLLL.LLL.LLLL.LLLLLLLLLLLLLLL
 LLLLLLLLL.LLLLL.LLLLL.LLLLLLLLLLLLL..LLLLLLL..LLLLLLLLLLLLLLLLLLLLLLLLLLL.LLLL.LLLL.LLLLLLLLLL
@@ -98,7 +98,7 @@ LLLLLLLLL.LLLLLLLLLLL.LLLLLLLLLLL.LLLLLLLLLLL..LLL.LLLLLL.LLLLLLL.LLLLLLL.LLLL.L
 LLLLLLLLLL.L.LL.LLLLL.LLLL.LLLLLLLLLLLLLLLLLL.LLLL.LLLLLL.LLLLLLL.L.LLLLL.LLLL.LLLLLLLLLLLLLLL
 TEXT
 
-# MAP = <<~TEXT.split("\n").map {|x| x.chars}
+# MAP = <<~TEXT.split("\n").map(&:chars)
 # L.LL.LL.LL
 # LLLLLLL.LL
 # L.L.L..L..
@@ -112,20 +112,20 @@ TEXT
 # TEXT
 
 def copy(generation)
-  Marshal.load(Marshal.dump(generation))
+  Marshal.load Marshal.dump(generation)
 end
 
 def adjasent(generation, x, y)
-  leftx = (0...x).to_a.reverse.find {|nx| generation[y][nx] != '.'}
-  rightx = ((x+1)...generation.first.size).to_a.find {|nx| generation[y][nx] != '.'}
+  left_x = (0...x).to_a.reverse.find { |nx| generation[y][nx] != '.' }
+  right_x = (x.next...generation.first.size).to_a.find { |nx| generation[y][nx] != '.' }
 
-  topy = (0...y).to_a.reverse.find {|ny| generation[ny][x] != '.'}
-  bottomy = ((y+1)...generation.size).to_a.find {|ny| generation[ny][x] != '.'}
+  top_y = (0...y).to_a.reverse.find { |ny| generation[ny][x] != '.' }
+  bottom_y = (y.next...generation.size).to_a.find { |ny| generation[ny][x] != '.' }
 
-  left = [leftx, y] if leftx
-  right = [rightx, y] if rightx
-  top = [x, topy] if topy
-  bottom = [x, bottomy] if bottomy
+  left = [left_x, y] if left_x
+  right = [right_x, y] if right_x
+  top = [x, top_y] if top_y
+  bottom = [x, bottom_y] if bottom_y
 
   left_top = nil
   right_bottom = nil
@@ -134,28 +134,28 @@ def adjasent(generation, x, y)
 
   offset = 1
   loop do
-    if !left_top && ((generation.dig(y - offset, x - offset).nil?) || (y - offset < 0) || (x - offset < 0))
-      left_top = []
-    elsif !left_top && (generation.dig(y - offset, x - offset) != '.')
-      left_top = [x - offset, y - offset]
+    if generation.dig(y - offset, x - offset).nil? || y < offset || x < offset
+      left_top ||= []
+    elsif generation.dig(y - offset, x - offset) != '.'
+      left_top ||= [x - offset, y - offset]
     end
 
-    if !right_bottom && (generation.dig(y + offset, x + offset).nil?)
-      right_bottom = []
-    elsif !right_bottom && (generation.dig(y + offset, x + offset) != '.')
-      right_bottom = [x + offset, y + offset]
+    if generation.dig(y + offset, x + offset).nil?
+      right_bottom ||= []
+    elsif generation.dig(y + offset, x + offset) != '.'
+      right_bottom ||= [x + offset, y + offset]
     end
 
-    if !right_top && ((generation.dig(y - offset, x + offset).nil?) || (y - offset < 0))
-      right_top = []
-    elsif !right_top && (generation.dig(y - offset, x + offset) != '.')
-      right_top = [x + offset, y - offset]
+    if generation.dig(y - offset, x + offset).nil? || y < offset
+      right_top ||= []
+    elsif generation.dig(y - offset, x + offset) != '.'
+      right_top ||= [x + offset, y - offset]
     end
 
-    if !left_bottom && ((generation.dig(y + offset, x - offset).nil?) || (x - offset < 0))
-      left_bottom = []
-    elsif !left_bottom && (generation.dig(y + offset, x - offset) != '.')
-      left_bottom = [x - offset, y + offset]
+    if generation.dig(y + offset, x - offset).nil? || x < offset
+      left_bottom ||= []
+    elsif generation.dig(y + offset, x - offset) != '.'
+      left_bottom ||= [x - offset, y + offset]
     end
 
     break if left_top && right_bottom && left_bottom && right_top
@@ -164,29 +164,31 @@ def adjasent(generation, x, y)
   end
 
   [
-    left_top, right_bottom, left_bottom, right_top, left, top, bottom, right
-  ].compact.reject(&:empty?).map {|nx, ny| generation[ny][nx]}
+    left_top,
+    right_bottom,
+    left_bottom,
+    right_top,
+    left,
+    top,
+    bottom,
+    right,
+  ].compact.reject(&:empty?).map { |nx, ny| generation[ny][nx] }
 end
-
-# puts MAP.map {|x| x.join}.join("\n")
-# puts '---------------------'
 
 def run(generation)
   next_generation = copy generation
 
   generation.each_with_index do |row, y|
     row.each_with_index do |cell, x|
-      adj = adjasent(generation, x, y)
-      if cell == 'L' && adj.count('#').zero?
+      adjasent = adjasent generation, x, y
+      if cell == 'L' && adjasent.count('#').zero?
         next_generation[y][x] = '#'
-      elsif cell == '#' && adj.count('#') >= 5
+      elsif cell == '#' && adjasent.count('#') >= 5
         next_generation[y][x] = 'L'
       end
     end
   end
 
-  # puts next_generation.map {|x| x.join}.join("\n")
-  # puts '---------------------'
   if next_generation == generation
     next_generation.flatten.count('#')
   else

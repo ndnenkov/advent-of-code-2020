@@ -1,4 +1,4 @@
-MAP = <<~TEXT.split("\n").map {|x| x.chars}
+MAP = <<~TEXT.split("\n").map(&:chars)
 LLLLLLLLL.LLLLL.LLLLL.LLLL.LLLLLL.LL.LLLLLLLLLLLLL.LLLLLL.LLLLLLLLLLLLLLL.LLLL.LLLL.LLLL.LLLLL
 LLLLLLLLL.LLLLL.LLLLL.LLLLLLLL.LLLLL.LLLLLLLLLLLLL.LLLLLLLLLLLLLLLLLL.LLL.LLLL.LLLLLLLLLLLLLLL
 LLLLLLLLL.LLLLL.LLLLL.LLLLLLLLLLLLL..LLLLLLL..LLLLLLLLLLLLLLLLLLLLLLLLLLL.LLLL.LLLL.LLLLLLLLLL
@@ -98,42 +98,46 @@ LLLLLLLLL.LLLLLLLLLLL.LLLLLLLLLLL.LLLLLLLLLLL..LLL.LLLLLL.LLLLLLL.LLLLLLL.LLLL.L
 LLLLLLLLLL.L.LL.LLLLL.LLLL.LLLLLLLLLLLLLLLLLL.LLLL.LLLLLL.LLLLLLL.L.LLLLL.LLLL.LLLLLLLLLLLLLLL
 TEXT
 
-# def stable?(generation)
-
-# end
+# MAP = <<~TEXT.split("\n").map(&:chars)
+# L.LL.LL.LL
+# LLLLLLL.LL
+# L.L.L..L..
+# LLLL.LL.LL
+# L.LL.LL.LL
+# L.LLLLL.LL
+# ..L.L.....
+# LLLLLLLLLL
+# L.LLLLLL.L
+# L.LLLLL.LL
+# TEXT
 
 def copy(generation)
-  Marshal.load(Marshal.dump(generation))
+  Marshal.load Marshal.dump(generation)
 end
 
 def adjasent(generation, x, y)
-  xes = [x - 1, x, x + 1].reject {|a| a < 0}.reject {|a| a >= generation.first.size}
-  ys = [y - 1, y, y + 1].reject {|b| b < 0}.reject {|b| b >= generation.size}
+  xes = [x - 1, x, x + 1].reject(&:negative?).reject { |x| x >= generation.first.size }
+  ys = [y - 1, y, y + 1].reject(&:negative?).reject { |y| y >= generation.size }
 
-  xes.product(ys).reject do |nx, ny|
-    (nx == x && ny == y) || (generation[ny][nx] == '.')
-  end.map {|nx, ny| generation[ny][nx]}
+  xes.product(ys).reject do |neighbour_x, neighbour_y|
+    (neighbour_x == x && neighbour_y == y) || (generation[neighbour_y][neighbour_x] == '.')
+  end.map { |neighbour_x, neighbour_y| generation[neighbour_y][neighbour_x] }
 end
-
-  # puts MAP.map {|x| x.join}.join("\n")
-  # puts '---------------------'
 
 def run(generation)
   next_generation = copy generation
 
   generation.each_with_index do |row, y|
     row.each_with_index do |cell, x|
-      adj = adjasent(generation, x, y)
-      if cell == 'L' && adj.count('#').zero?
+      adjasent = adjasent generation, x, y
+      if cell == 'L' && adjasent.count('#').zero?
         next_generation[y][x] = '#'
-      elsif cell == '#' && adj.count('#') >= 4
+      elsif cell == '#' && adjasent.count('#') >= 4
         next_generation[y][x] = 'L'
       end
     end
   end
 
-  # puts next_generation.map {|x| x.join}.join("\n")
-  # puts '---------------------'
   if next_generation == generation
     next_generation.flatten.count('#')
   else
