@@ -1,4 +1,4 @@
-PROGRAM = <<~TEXT.split("\n")
+INSTRUCTIONS = <<~TEXT.split("\n")
 F99
 L180
 W1
@@ -775,7 +775,7 @@ S4
 F53
 TEXT
 
-# PROGRAM = <<~TEXT.split("\n")
+# INSTRUCTIONS = <<~TEXT.split("\n")
 # F10
 # N3
 # F7
@@ -783,85 +783,36 @@ TEXT
 # F11
 # TEXT
 
-LEFTS = {
-  n: :w,
-  w: :s,
-  s: :e,
-  e: :n
-}
-
-RIGHT = {
-  w: :n,
-  s: :w,
-  e: :s,
-  n: :e
-}
+LEFT = {n: :w, w: :s, s: :e, e: :n}
+RIGHT = {w: :n, s: :w, e: :s, n: :e}
 
 facing = :e
-e = 0
-n = 0
-w = 0
-s = 0
+directions = {e: 0, n: 0, w: 0, s: 0}
 
-def turn_left(current, degrees)
-  times = degrees / 90
-  x = current
-  times.times { x = LEFTS[x] }
-  x
+def turn_left(direction, degrees)
+  (degrees / 90).times { direction = LEFT[direction] }
+  direction
 end
 
-def turn_right(current, degrees)
-  times = degrees / 90
-  x = current
-  times.times { x = RIGHT[x] }
-  x
+def turn_right(direction, degrees)
+  (degrees / 90).times { direction = RIGHT[direction] }
+  direction
 end
 
-p PROGRAM
-PROGRAM.each do |instruction|
-  what = instruction[0].downcase.to_sym
-  distance = instruction[1..-1].to_i
+INSTRUCTIONS.each do |instruction|
+  action = instruction[0].downcase.to_sym
+  amount = instruction[1..-1].to_i
 
-  p [e, n, w, s]
-  case what
+  case action
   when :f
-    case facing
-    when :e
-      e += distance
-    when :n
-      n += distance
-    when :w
-      w += distance
-    when :s
-      s += distance
-    end
+    directions[facing] += amount
   when :l
-    # facing = LEFTS[facing]
-    facing = turn_left(facing, distance)
+    facing = turn_left facing, amount
   when :r
-    # facing = RIGHT[facing]
-    facing = turn_right(facing, distance)
-  when :e
-    e += distance
-  when :n
-    n += distance
-  when :w
-    w += distance
-  when :s
-    s += distance
+    facing = turn_right facing, amount
+  when :e, :n, :w, :s
+    directions[action] += amount
   end
 end
 
-p [e, n, w, s]
-puts (n - s).abs + (e - w).abs
-
-
-
-
-
-
-
-
-
-
-
+puts (directions[:n] - directions[:s]).abs + (directions[:e] - directions[:w]).abs

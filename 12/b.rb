@@ -1,4 +1,4 @@
-PROGRAM = <<~TEXT.split("\n")
+INSTRUCTIONS = <<~TEXT.split("\n")
 F99
 L180
 W1
@@ -775,7 +775,7 @@ S4
 F53
 TEXT
 
-# PROGRAM = <<~TEXT.split("\n")
+# INSTRUCTIONS = <<~TEXT.split("\n")
 # F10
 # N3
 # F7
@@ -783,102 +783,55 @@ TEXT
 # F11
 # TEXT
 
-# PROGRAM = <<~TEXT.split("\n")
-# F99
-# L180
-# W1
-# W3
-# R90
-# E5
-# R180
-# S4
-# F55
-# L90
-# E5
-# S3
-# R180
-# N2
-# W3
-# S1
-# F64
-# W4
-# TEXT
-
-LEFTS = {
-  n: :w,
-  w: :s,
-  s: :e,
-  e: :n
-}
-
-RIGHT = {
-  w: :n,
-  s: :w,
-  e: :s,
-  n: :e
-}
+LEFT = {n: :w, w: :s, s: :e, e: :n}
+RIGHT = {w: :n, s: :w, e: :s, n: :e}
 
 waypoint = {e: 10, n: 1}
-e = 0
-n = 0
-w = 0
-s = 0
+directions = {e: 0, n: 0, w: 0, s: 0}
 
-def turn_left_waypoint(waypoint, degrees)
+def turn_waypoint_left(waypoint, degrees)
   return waypoint if degrees.zero?
 
-  new_keys = waypoint.keys.map {|x| LEFTS[x]}
-  # new_values = waypoint.values.reverse
-  new_values = waypoint.values
+  directions = waypoint.keys.map { |direction| LEFT[direction] }
+  distances = waypoint.values
 
-  turn_left_waypoint new_keys.zip(new_values).to_h, degrees - 90
+  turn_waypoint_left directions.zip(distances).to_h, degrees - 90
 end
 
-def turn_right_waypoint(waypoint, degrees)
+def turn_waypoint_right(waypoint, degrees)
   return waypoint if degrees.zero?
 
-  new_keys = waypoint.keys.map {|x| RIGHT[x]}
-  # new_values = waypoint.values.reverse
-  new_values = waypoint.values
+  directions = waypoint.keys.map { |direction| RIGHT[direction] }
+  distances = waypoint.values
 
-  turn_right_waypoint new_keys.zip(new_values).to_h, degrees - 90
+  turn_waypoint_right directions.zip(distances).to_h, degrees - 90
 end
 
-p PROGRAM
-PROGRAM.each do |instruction|
-  what = instruction[0].downcase.to_sym
-  distance = instruction[1..-1].to_i
+INSTRUCTIONS.each do |instruction|
+  action = instruction[0].downcase.to_sym
+  amount = instruction[1..-1].to_i
 
-  # p waypoint
-  # puts "___#{[:e, :n, :w, :s].zip([e, n, w, s]).to_h}"
-  # p instruction
-  case what
+  case action
   when :f
-    e += distance * waypoint[:e].to_i
-    n += distance * waypoint[:n].to_i
-    w += distance * waypoint[:w].to_i
-    s += distance * waypoint[:s].to_i
+    waypoint.each { |direction, distance| directions[direction] += amount * distance }
   when :l
-    waypoint = turn_left_waypoint(waypoint, distance)
+    waypoint = turn_waypoint_left waypoint, amount
   when :r
-    waypoint = turn_right_waypoint(waypoint, distance)
+    waypoint = turn_waypoint_right waypoint, amount
   when :e, :n, :w, :s
-    oposite = LEFTS[LEFTS[what]]
-    current = waypoint[what].to_i - waypoint[oposite].to_i + distance
-    x = current.positive? ? {what => current} : {oposite => current.abs}
-    y = waypoint.slice(LEFTS[what], RIGHT[what])
-    waypoint = x.merge(y)
+    oposite_direction = LEFT[LEFT[action]]
+    distance = waypoint[action].to_i - waypoint[oposite_direction].to_i + amount
+
+    perpendicular_waypoint_attributes = waypoint.slice LEFT[action], RIGHT[action]
+    parallel_waypoint_attributes =
+      if distance.positive?
+        {action => distance}
+      else
+        {oposite_direction => distance.abs}
+      end
+
+    waypoint = parallel_waypoint_attributes.merge perpendicular_waypoint_attributes
   end
 end
 
-puts (n - s).abs + (e - w).abs
-
-
-
-
-
-
-
-
-
-
+puts (directions[:n] - directions[:s]).abs + (directions[:e] - directions[:w]).abs
