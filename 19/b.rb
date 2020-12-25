@@ -1,5 +1,3 @@
-require 'pp'
-
 INPUT = <<~TEXT.split("\n")
 72: "b"
 45: 46 52 | 9 72
@@ -565,50 +563,45 @@ abaababaabbababaaabbaabbbbbaabbaaaaababa
 aaabbbabaababbbabbbaaaabbabbbbaabaaabaaa
 TEXT
 
-RULES = INPUT.take_while { |x| x.match(/^\d/) }.map { |x| x.split(': ')}.to_h
-MESSAGES = INPUT.drop_while {|x| x != ''}.drop(1)
+# INPUT = <<~TEXT.split("\n")
+# 0: 4 1 5
+# 1: 2 3 | 3 2
+# 2: 4 4 | 5 5
+# 3: 4 5 | 5 4
+# 4: "a"
+# 5: "b"
 
+# ababbb
+# bababa
+# abbbab
+# aaabbb
+# aaaabbb
+# TEXT
+
+MESSAGES = INPUT.drop_while { |row| row != '' }.drop(1)
+rules = INPUT.take_while { |row| row.match?(/^\d/) }.map { |row| row.split(': ') }.to_h
 # 8: 42     => 8: 42 | 42 8
 # 11: 42 31 => 11: 42 31 | 42 11 31
-RULES['8'] = "(?<eight>42 | 42 \\g<eight>)"
-RULES['11'] = "(?<eleven>42 31 | 42 \\g<eleven> 31)"
+rules['8'] = "(?<eight>42 | 42 \\g<eight>)"
+rules['11'] = "(?<eleven>42 31 | 42 \\g<eleven> 31)"
 
-remaining_keys = RULES.keys
+remaining_rule_numbers = rules.keys
 loop do
-  remaining_keys.each do |key|
-    value = RULES[key]
-    unless value.match?(/\d/)
-      RULES.each do |match_key, match_value|
-        RULES[match_key] = match_value.gsub(/\b#{key}\b/, "(?:#{value})")
-      end
-      remaining_keys.delete key
+  remaining_rule_numbers.each do |rule_number|
+    rule = rules[rule_number]
+
+    next if rule.match?(/\d/)
+
+    rules.each do |matching_rule_number, matching_rule|
+      rules[matching_rule_number] = matching_rule.gsub(/\b#{rule_number}\b/, "(#{rule})")
     end
+
+    remaining_rule_numbers.delete rule_number
   end
 
-  break if remaining_keys.empty?
+  break if remaining_rule_numbers.empty?
 end
 
-RULES.each do |key, value|
-  RULES[key] = value.tr('" ', '')
-end
+rules.each { |rule_number, rule| rules[rule_number] = rule.tr('" ', '') }
 
-# puts RULES
-# p MESSAGES
-
-puts MESSAGES.count {|mes| mes.match(/^(?:#{RULES['0']})$/)}
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
+puts MESSAGES.count { |message| message.match?(/^(#{rules['0']})$/) }
