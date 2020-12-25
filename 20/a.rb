@@ -1,5 +1,3 @@
-require 'pp'
-
 INPUT = <<~TEXT.split("\n")
 Tile 3571:
 ##..##....
@@ -1841,84 +1839,60 @@ TEXT
 # TEXT
 
 class Tile
-  attr_reader :x, :y, :a, :b
-
   def initialize(image)
-    @x = image.first.join
-    @y = image.last.join
-    @a = image.transpose.first.join
-    @b = image.transpose.last.join
+    @image = image
+  end
+
+  def top
+    @image.first.join
+  end
+
+  def bottom
+    @image.last.join
+  end
+
+  def left
+    @image.map(&:first).join
+  end
+
+  def right
+    @image.map(&:last).join
   end
 
   def match?(other)
-    !(
-      [x, y, a, b].flat_map {|w| [w, w.reverse]} & [other.x, other.y, other.a, other.b].flat_map {|w| [w, w.reverse]}
-    ).empty?
+    sides = [top, bottom, left, right].flat_map { |side| [side, side.reverse] }
+    other_sides = [other.top, other.bottom, other.left, other.right].flat_map do |side|
+      [side, side.reverse]
+    end
+
+    !(sides & other_sides).empty?
   end
 end
 
-TILES = {}
-last_tile = []
-last_tile_number = nil
-INPUT.each do |row|
-  if row.match(/^Tile/)
-    last_tile_number = row.match(/\d+/).to_s.to_i
-  elsif row.strip.empty?
-    TILES[last_tile_number] = Tile.new last_tile
-    last_tile = []
-  else
-    last_tile.push row.chars
+def parse(input)
+  tiles = {}
+  last_tile = []
+  last_tile_number = nil
+
+  input.each do |row|
+    if row.match(/^Tile/)
+      last_tile_number = row.match(/\d+/).to_s.to_i
+    elsif row.empty?
+      tiles[last_tile_number] = Tile.new last_tile
+      last_tile = []
+    else
+      last_tile.push row.chars
+    end
   end
+  tiles[last_tile_number] = Tile.new last_tile
+
+  tiles
 end
-TILES[last_tile_number] = Tile.new last_tile
 
-no_matches = []
-TILES.each do |key, tile|
-  if (TILES.values - [tile]).count {|match_tile| tile.match?(match_tile)} < 3
-    no_matches.push key
-  end
-end
-p no_matches.reduce(:*)
+TILES = parse INPUT
 
-# p [TILES[2311].x, TILES[2311].y, TILES[2311].a, TILES[2311].b]
+corner_tile_numbers = TILES.select do |number, tile|
+  (TILES.values - [tile]).count { |other_tile| tile.match?(other_tile) } == 2
+end.keys
 
-
-
-# ..##.#..#.
-# ##..#.....
-# #...##..#.
-# ####.#...#
-# ##.##.###.
-# ##...#.###
-# .#.#.#..##
-# ..#....#..
-# ###...#.#.
-# ..###..###
-
-
-# #...##.#.. ..###..### #.#.#####.
-# ..#.#..#.# ###...#.#. .#..######
-# .###....#. ..#....#.. ..#.......
-# ###.##.##. .#.#.#..## ######....
-# .###.##### ##...#.### ####.#..#.
-# .##.#....# ##.##.###. .#...#.##.
-# #...###### ####.#...# #.#####.##
-# .....#..## #...##..#. ..#.###...
-# #.####...# ##..#..... ..#.......
-# #.##...##. ..##.#..#. ..#.###...
-
-# ["..##.#..#.", "..###..###", ".#####..#.", "...#.##..#"]
-
-
-
-
-
-
-
-
-
-
-
-
-
-
+puts corner_tile_numbers.reduce(:*)

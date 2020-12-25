@@ -1,6 +1,3 @@
-require 'pp'
-require 'set'
-
 INPUT = <<~TEXT.split("\n")
 Tile 3571:
 ##..##....
@@ -1842,11 +1839,10 @@ TEXT
 # TEXT
 
 class Tile
-  attr_reader :image, :number
+  attr_reader :image
 
-  def initialize(image, number)
+  def initialize(image)
     @image = image
-    @number = number
   end
 
   def top
@@ -1865,74 +1861,73 @@ class Tile
     @image.map(&:last).join
   end
 
+  def to_s
+    @image.map(&:join).join("\n")
+  end
+
   def match?(other)
     return true unless other
 
     sides = [top, bottom, left, right].flat_map { |side| [side, side.reverse] }
-    other_sides = [other.top, other.bottom, other.left, other.right].flat_map { |side| [side, side.reverse] }
+    other_sides = [other.top, other.bottom, other.left, other.right].flat_map do |side|
+      [side, side.reverse]
+    end
 
     !(sides & other_sides).empty?
   end
 
-  def inspect
-    @image.map(&:join).join("\n")
-  end
-
   def oriented_towards(top_tile, left_tile)
     all_variations.select do |variation|
-      [nil, variation.top].include?(top_tile&.bottom) && [nil, variation.left].include?(left_tile&.right)
+      [nil, variation.top].include?(top_tile&.bottom) &&
+        [nil, variation.left].include?(left_tile&.right)
     end
   end
 
   def all_variations
-    [false, true].product([false, true], [0, 90, 180, 270]).map do |vertical, horizontal, rotation|
-      the_clone = deep_clone
-      the_clone.reorient flip_vertical: vertical, flip_horizontal: horizontal, rotation: rotation
-      the_clone
-    end.take(8)
+    [false, true].product([0, 90, 180, 270]).map do |flip, rotation|
+      dup.reorient flip: flip, rotation: rotation
+    end
   end
 
-  def reorient(flip_vertical: false, flip_horizontal: false, rotation: 0)
-    @image = @image.reverse if flip_vertical
-
-    @image = @image.map(&:reverse) if flip_horizontal
-
+  def reorient(flip: false, rotation: 0)
+    @image = @image.map(&:reverse) if flip
     rotate rotation
   end
 
+  private
+
   def rotate(degrees)
-    return true if degrees.zero?
+    return self if degrees.zero?
 
     @image = @image.transpose
 
-    reorient flip_horizontal: true
+    reorient flip: true
 
     rotate degrees - 90
   end
-
-  def deep_clone
-    Marshal.load Marshal.dump(self)
-  end
 end
 
-TILES = {}
-last_tile = []
-last_tile_number = nil
-INPUT.each do |row|
-  if row.match(/^Tile/)
-    last_tile_number = row.match(/\d+/).to_s.to_i
-  elsif row.strip.empty?
-    TILES[last_tile_number] = Tile.new last_tile, last_tile_number
-    last_tile = []
-  else
-    last_tile.push row.chars
+def parse(input)
+  tiles = {}
+  last_tile = []
+  last_tile_number = nil
+
+  input.each do |row|
+    if row.match(/^Tile/)
+      last_tile_number = row.match(/\d+/).to_s.to_i
+    elsif row.empty?
+      tiles[last_tile_number] = Tile.new last_tile
+      last_tile = []
+    else
+      last_tile.push row.chars
+    end
   end
+  tiles[last_tile_number] = Tile.new last_tile
+
+  tiles
 end
-TILES[last_tile_number] = Tile.new last_tile, last_tile_number
 
-CORNER_TILES = [3881, 1153, 1163, 1619].map { |number| TILES[number] }
-
-def find_no_orientation(fixed, remaining, size)
+def order_without_orientation(fixed, remaining, size)
   return fixed if remaining.empty?
 
   top_tile = fixed.size < size ? nil : fixed[fixed.size - size]
@@ -1940,15 +1935,13 @@ def find_no_orientation(fixed, remaining, size)
 
   pick_from = remaining.select { |tile| tile.match?(top_tile) && tile.match?(left_tile) }
 
-  pick_from.each do |tile|
-    found = find_no_orientation fixed + [tile], remaining - [tile], size
-    return found if found
+  pick_from.find do |tile|
+    order = order_without_orientation fixed + [tile], remaining - [tile], size
+    return order if order
   end
-
-  nil
 end
 
-def find_flipping(fixed, remaining, size)
+def correct_orientation(fixed, remaining, size)
   return fixed if remaining.empty?
 
   current_tile, *remaining = remaining
@@ -1956,49 +1949,55 @@ def find_flipping(fixed, remaining, size)
   top_tile = fixed.size < size ? nil : fixed[fixed.size - size]
   left_tile = (fixed.size % size).zero? ? nil : fixed.last
 
-  current_tile.oriented_towards(top_tile, left_tile).each do |flipped|
-    flipping = find_flipping fixed + [flipped], remaining, size
-    return flipping if flipping
+  current_tile.oriented_towards(top_tile, left_tile).find do |flipped|
+    orientation = correct_orientation fixed + [flipped], remaining, size
+    return orientation if orientation
   end
-
-  nil
 end
 
-orientation = find_no_orientation [CORNER_TILES.first], TILES.values - [CORNER_TILES.first], 12
-flipping = find_flipping [], orientation, 12
+TILES = parse INPUT
+SQUARE_SIZE = (TILES.size ** 0.5).to_i
 
-huge_string = ''
-flipping.each_slice(12).each do |satelite_row|
+corner_tile = TILES.find do |number, tile|
+  (TILES.values - [tile]).count { |other_tile| tile.match?(other_tile) } == 2
+end.last
+
+without_orientation = order_without_orientation(
+  [corner_tile],
+  TILES.values - [corner_tile],
+  SQUARE_SIZE,
+)
+with_orientation = correct_orientation [], without_orientation, SQUARE_SIZE
+
+complete_image = ''
+with_orientation.each_slice(SQUARE_SIZE).each do |satelite_row|
   images = satelite_row.map(&:image)
+
   (1...9).each do |row_index|
-    huge_string += images.map {|image| image[row_index][1...-1].join}.join
-    huge_string += "\n"
+    complete_image += images.map { |image| image[row_index][1...-1].join }.join
+    complete_image += "\n"
   end
 end
 
-monster_pattern = lambda do |leading|
-  /#(..*\n.{#{leading}})#(.{4})##(.{4})##(.{4})###(.*\n..{#{leading}})#(.{2})#(.{2})#(.{2})#(.{2})#(.{2})#/
+def monster_pattern(lead)
+  # lead|                  #
+  # lead|#    ##    ##    ###
+  # lead| #  #  #  #  #  #
+  /#(..*\n.{#{lead}})#(.{4})##(.{4})##(.{4})###(.*\n..{#{lead}})#(.{2})#(.{2})#(.{2})#(.{2})#(.{2})#/
 end
 
-correctly_oriented_huge_ass_string =
-  Tile.new(huge_string.split.map(&:chars), nil).all_variations.find do |variation|
-    as_string = variation.inspect
+line_size = complete_image.match(/.+/).to_s.size
+complete_image_with_orientation =
+  Tile.new(complete_image.split.map(&:chars)).all_variations.find do |variation|
+    as_string = variation.to_s
 
-    0.upto(as_string.match(/.+/).to_s.size - 1).find do |size|
-      as_string.match monster_pattern.(size)
-    end
-  end.inspect
+    0.upto(line_size.pred).find { |size| as_string.match monster_pattern(size) }
+  end.to_s
 
-line_size = correctly_oriented_huge_ass_string.match(/.+/).to_s.size
-0.upto(line_size - 1).each do |leading_size|
-  correctly_oriented_huge_ass_string.gsub!(monster_pattern.(leading_size)) do
-    "♡#{$1}♡#{$2}♡♡#{$3}♡♡#{$4}♡♡♡#{$5}♡#{$6}♡#{$7}♡#{$8}♡#{$9}♡#{$10}♡"
+0.upto(line_size.pred).each do |leading_size|
+  complete_image_with_orientation.gsub!(monster_pattern(leading_size)) do
+    "🐉#{$1}🐉#{$2}🐉🐉#{$3}🐉🐉#{$4}🐉🐉🐉#{$5}🐉#{$6}🐉#{$7}🐉#{$8}🐉#{$9}🐉#{$10}🐉"
   end
 end
-puts "monsters: #{correctly_oriented_huge_ass_string.count('♡') / 15}"
-puts correctly_oriented_huge_ass_string.count('#')
 
-
-
-
-
+puts complete_image_with_orientation.count('#')
