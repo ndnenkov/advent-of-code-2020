@@ -378,7 +378,6 @@ TEXT
 # ((2 + 4 * 9) * (6 + 9 * 8 + 6) + 6) + 2 + 4 * 2
 # TEXT
 
-
 class Integer
   alias_method :add, :+
   alias_method :mult, :*
@@ -388,9 +387,3 @@ class Integer
 end
 
 puts TASKS.sum { |task| eval task.tr('+*', '*+') }
-
-
-
-
-
-
