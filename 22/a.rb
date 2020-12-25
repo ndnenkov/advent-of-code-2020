@@ -70,11 +70,10 @@ TEXT
 # 10
 # TEXT
 
-P1_DECK = DECKS.take_while {|x| x != ''}.drop(1).map(&:to_i)
-P2_DECK = DECKS.drop_while {|x| x != 'Player 2:'}.drop(1).map(&:to_i)
+p1_deck = DECKS.take_while { |row| row != '' }.drop(1).map(&:to_i)
+p2_deck = DECKS.drop_while { |row| row != 'Player 2:' }.drop(1).map(&:to_i)
 
 def turn(p1_deck, p2_deck)
-  p "#{p1_deck.size}x#{p2_deck.size}"
   p1_card = p1_deck.shift
   p2_card = p2_deck.shift
 
@@ -86,32 +85,11 @@ def turn(p1_deck, p2_deck)
 end
 
 loop do
-  turn P1_DECK, P2_DECK
-  break if P1_DECK.empty? || P2_DECK.empty?
+  turn p1_deck, p2_deck
+
+  break if p1_deck.empty? || p2_deck.empty?
 end
 
-winning_deck = P1_DECK.empty? ? P2_DECK : P1_DECK
+winning_deck = p1_deck.empty? ? p2_deck : p1_deck
 
-sum = 0
-winning_deck.reverse.each_with_index do |card, index|
-  sum += card * index.next
-end
-puts sum
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
+puts winning_deck.reverse.each_with_index.sum { |card, index| card * index.next }

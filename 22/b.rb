@@ -72,10 +72,10 @@ TEXT
 # 10
 # TEXT
 
-P1_DECK = DECKS.take_while {|x| x != ''}.drop(1).map(&:to_i)
-P2_DECK = DECKS.drop_while {|x| x != 'Player 2:'}.drop(1).map(&:to_i)
+p1_deck = DECKS.take_while { |row| row != '' }.drop(1).map(&:to_i)
+p2_deck = DECKS.drop_while { |row| row != 'Player 2:' }.drop(1).map(&:to_i)
 
-def turn(p1_deck, p2_deck, p1_configurations = [].to_set, p2_configurations = [].to_set)
+def turn(p1_deck, p2_deck, p1_configurations = Set.new, p2_configurations = Set.new)
   if p1_deck.empty? || p2_deck.empty?
     return [p1_deck, p2_deck, [p1_deck, p2_deck].max_by(&:size)]
   end
@@ -84,48 +84,26 @@ def turn(p1_deck, p2_deck, p1_configurations = [].to_set, p2_configurations = []
     return [p1_deck, p2_deck, p1_deck]
   end
 
-  new_p1_configurations = p1_configurations + [p1_deck.hash]
-  new_p2_configurations = p2_configurations + [p2_deck.hash]
+  p1_configurations += [p1_deck.hash]
+  p2_configurations += [p2_deck.hash]
 
   p1_card, *p1_deck = p1_deck
   p2_card, *p2_deck = p2_deck
 
+  p1_wins = p1_card > p2_card
   if p1_card <= p1_deck.size && p2_card <= p2_deck.size
-    sub_p1_deck, sub_p2_deck, sub_winner = turn p1_deck.take(p1_card), p2_deck.take(p2_card)
-    if sub_p1_deck == sub_winner
-      turn p1_deck + [p1_card, p2_card], p2_deck, new_p1_configurations, new_p2_configurations
-    else
-      turn p1_deck, p2_deck + [p2_card, p1_card], new_p1_configurations, new_p2_configurations
-    end
-  elsif p1_card > p2_card
-    turn p1_deck + [p1_card, p2_card], p2_deck, new_p1_configurations, new_p2_configurations
+    sub_p1_deck, _, sub_winner = turn p1_deck.take(p1_card), p2_deck.take(p2_card)
+
+    p1_wins = sub_p1_deck == sub_winner
+  end
+
+  if p1_wins
+    turn p1_deck + [p1_card, p2_card], p2_deck, p1_configurations, p2_configurations
   else
-    turn p1_deck, p2_deck + [p2_card, p1_card], new_p1_configurations, new_p2_configurations
+    turn p1_deck, p2_deck + [p2_card, p1_card], p1_configurations, p2_configurations
   end
 end
 
-p1_deck, p2_deck, winning_deck = turn P1_DECK, P2_DECK
+*, winning_deck = turn p1_deck, p2_deck
 
-sum = 0
-winning_deck.reverse.each_with_index do |card, index|
-  sum += card * index.next
-end
-puts sum
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
+puts winning_deck.reverse.each_with_index.sum { |card, index| card * index.next }
