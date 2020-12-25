@@ -1,6 +1,4 @@
-require 'pp'
-
-FOODS = <<~TEXT.split("\n")
+INPUT = <<~TEXT.split("\n")
 fztz lmv vjgnkg gfvrr jbsjb dkng mndtv vdvs qcmz nvlz jhl kslcnpt qtbt ndkkq lmfnc gcbffc rjxcdh rngm fjnxnqq kccpf chtfln vfklqc bsjffzv gh gjxt lssrnhn kpjnltk vg xcvqp gpfpp vtg vnss lsvv bqpz jjpplbn jzkkt hqf cxvj hmjlx vxrgk xrn mxrn cmkq rrlz mjbtz fvhrnqm gfkp txgqb ctrn qlgtfx nrkzt rxvm kctkhg pkkg gtmqj nchxcr hblmrt xlljpg qqjcg jhdzz sgzr mvkj ctrsrl xpmhz jxcxh gmvckb mdh mbkbn nqfk (contains sesame, nuts)
 fgfc kmhxmd fvhrnqm jvntmtdx mlv mbkbn mxrn nsznhh mdh gtpm xnztb hblmrt hxdbs sgzr pkkg nqbd hnkn bthgq jqs gcgms pfx gdtzrg lkgvx gx gccjpvx dcmhdkm bqnn jhdzz mndvp sjpjp bdbn ctrn gdpnb mjbtz mzrmxdg gfvrr jxcxh bmgp rrlz fgvk gcbffc vdvs mndtv mscl kctkhg zrkjc vnss ndkkq rjxcdh vzrtvj kvzv hhjttv rkl (contains shellfish, sesame, fish)
 vrnkfr nbbjjq dlhbxjk kntljk bqpz llsvqv zdcvnk nqfk jxcxh nsznhh mgdx gfkp mvkj rpncf dcmhdkm klctxj vdvs hqzxj zhlt rsmg sjgcd bmgp mndvp bthjz cmkq qcmz ndkkq xtdl zrkjc gjxt mfrdz rcx zrvb jjpplbn grzmk nzhx xmx qqjcg dfqlcrs qq mxrn gtpm tfc gfvrr sgzr kvnzs mnzcxjd kmppk nlnscn rnnsp xlljpg sdxkt pkkg lxtc sjpjp vzrtvj clghk gmbcjjd jgdcp cxvj hhjttv mbkbn nbfbf pndtrl gdpnb nxrl nvlz bqnn nthn zhlkr bphms rjb kvqgb sdcmhdm mzrmxdg hqf fkcjzhr hnkn gpfpp gtmqj fztz bthgq lssrnhn ctrsrl (contains dairy, soy, fish)
@@ -53,108 +51,57 @@ vsfz rsmg qfql sdxkt rjb pfx xcvqp gbsjx zrtlv kctkhg jhdzz vdvs jzbhxq dcmhdkm 
 mjbtz dkng chtfln rsmg bxcthm gx qlgd dfqlcrs pndtrl nclt tfc mnzcxjd mscl rpncf bdbn lvhb kccpf vzrtvj kpjnltk gcgms hjcpjz jqs sdxkt zsvs bthgq blbbcs mdh zrkjc rkl vfklqc jhl cdnhg vxrgk jqfktrt ndkkq jvntmtdx xrn fgfc ggvglx kvqgb mxrn nvlz nzhx sjgcd hrqhjf gtpm mbkbn jxcxh xxsvnx cjrpc mndvp qfql hnkn hblmrt sgzr qzvlvh klctxj ctrsrl tjsh gfvrr jbsjb pkkg (contains nuts, fish)
 TEXT
 
-# soy: sqjhc, fvjkl
-# dairy: mxmxvkd, sqjhc, fvjkl, kfcds, nhms, sbzzf, trh
-# fish: mxmxvkd, sqjhc, kfcds, nhms, sbzzf
-#
-# kfcds, nhms, sbzzf, trh
-# mxmxvkd [[dairy, fish], [dairy], [fish]]
-# sqjhc [[dairy, fish], [fish], [soy]]
-# fvjkl [[dairy], [soy]]
-# 
-# kfcds [[dairy, fish]]
-# nhms [[dairy, fish]]
-# sbzzf [[dairy], [fish]]
-# trh [[dairy]]
-
-# FOODS = <<~TEXT.split("\n")
+# INPUT = <<~TEXT.split("\n")
 # mxmxvkd kfcds sqjhc nhms (contains dairy, fish)
 # trh fvjkl sbzzf mxmxvkd (contains dairy)
 # sqjhc fvjkl (contains soy)
 # sqjhc mxmxvkd sbzzf (contains fish)
 # TEXT
 
-# sesame
-# nuts
-# shellfish
-# fish
-# dairy
-# soy
-# peanuts
-# wheat
-
-PFOODS = []
-PALERGENS = {}
-POSSIBLE_RELATIONS = {}
-FOODS.each_with_index do |row, index|
+foods = []
+possible_relations = {}
+INPUT.each_with_index do |row, index|
   ingredients, alergens = row.tr(')', '').split('(contains ')
   ingredients = ingredients.split
   alergens = alergens.split(', ')
-  PFOODS.push(ingredients: ingredients, alergens: alergens)
-  ingredients.each do |ingredient|
-    POSSIBLE_RELATIONS[ingredient] ||= []
-    POSSIBLE_RELATIONS[ingredient] += [alergens]
-  end
+
+  foods.push ingredients: ingredients, alergens: alergens
+
   alergens.each do |alergen|
-    PALERGENS[alergen] ||= []
-    PALERGENS[alergen] |= ingredients
-  end
-end
-PINGREDIENTS = POSSIBLE_RELATIONS.map {|ing, alers| [ing, alers.reduce(&:|)]}.to_h
-PALERGENS.each do |alergen, pingredients|
-  PALERGENS[alergen] = pingredients.sort_by do |ingredient|
-    POSSIBLE_RELATIONS[ingredient].count {|rel| rel.include? alergen }
+    possible_relations[alergen] ||= ingredients
+    possible_relations[alergen] &= ingredients
   end
 end
 
-SUS_INGREDIENTS = PALERGENS.keys.map {|al| [al, PFOODS.flat_map {|x| x[:ingredients]}.uniq]}.to_h
-SUS_INGREDIENTS.each do |alergen, possible_ingredients|
-  PFOODS.each do |ingredients:, alergens:|
-    next unless alergens.include?(alergen)
+def correct?(ingredient_alergen_guesses, foods)
+  foods.all? do |ingredients:, alergens:|
+    alergens_to_remove = ingredient_alergen_guesses.select do |ingredient, _|
+      ingredients.include? ingredient
+    end.values
 
-    SUS_INGREDIENTS[alergen] &= ingredients
-  end
-end
-
-def correct?(ingredient_alergen_guesses)
-  PFOODS.all? do |ingredients:, alergens:|
-    alergens_to_remove = ingredient_alergen_guesses.select {|ing, al| ingredients.include?(ing)}.values
     (alergens - alergens_to_remove).empty?
   end
 end
 
-MEMO = {}
-def find_match_memo(remaining_alergens, ingredient_alergen_guesses)
-  # return find_match(remaining_alergens, ingredient_alergen_guesses)
-  if MEMO.key?(ingredient_alergen_guesses)
-    MEMO[ingredient_alergen_guesses]
-  else
-    MEMO[ingredient_alergen_guesses] = find_match(remaining_alergens, ingredient_alergen_guesses)
+def find_mapping(remaining_alergens, ingredient_alergen_guesses, possible_relations, foods)
+  if remaining_alergens.empty? && correct?(ingredient_alergen_guesses, foods)
+    return ingredient_alergen_guesses
   end
-end
-
-def find_match(remaining_alergens, ingredient_alergen_guesses)
-  return ingredient_alergen_guesses if remaining_alergens.empty? && correct?(ingredient_alergen_guesses)
 
   remaining_alergens.find do |alergen|
-    SUS_INGREDIENTS[alergen].find do |possible_ingredient|
+    possible_relations[alergen].find do |possible_ingredient|
       next if ingredient_alergen_guesses[possible_ingredient]
 
-      match = find_match_memo(
+      mapping = find_mapping(
         remaining_alergens - [alergen],
         ingredient_alergen_guesses.merge(possible_ingredient => alergen),
+        possible_relations,
+        foods,
       )
-      return match if match
+      return mapping if mapping
     end
   end
 end
-real_matching = find_match_memo(PALERGENS.keys, {})
-puts (real_matching.to_a.sort_by {|ingr, alerg| alerg}.map(&:first).join(','))
 
-
-
-
-
-
-
-
+mapping = find_mapping possible_relations.keys, {}, possible_relations, foods
+puts mapping.sort_by(&:last).map(&:first).join(',')
