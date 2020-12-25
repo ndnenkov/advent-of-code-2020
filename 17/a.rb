@@ -1,19 +1,13 @@
-INITIAL_STATE = <<~TEXT.split("\n").map(&:chars)
-....###.
-#...####
-##.#.###
-..#.#...
-##.#.#.#
-#.######
-..#..#.#
-######.#
+require_relative '../read_input'
+
+SAMPLE_INPUT = <<~TEXT
+.#.
+..#
+###
 TEXT
 
-# INITIAL_STATE = <<~TEXT.split("\n").map(&:chars)
-# .#.
-# ..#
-# ###
-# TEXT
+INPUT = read_input
+INITIAL_STATE = INPUT.split("\n").map(&:chars)
 
 state = {}
 

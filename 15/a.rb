@@ -1,10 +1,11 @@
-NUMBERS = <<~TEXT.strip.split(',').map(&:to_i)
-10,16,6,0,1,17
+require_relative '../read_input'
+
+SAMPLE_INPUT = <<~TEXT
+0,3,6
 TEXT
 
-# NUMBERS = <<~TEXT.strip.split(',').map(&:to_i)
-# 0,3,6
-# TEXT
+INPUT = read_input
+NUMBERS = INPUT.strip.split(',').map(&:to_i)
 
 ages = NUMBERS[0...-1].map.with_index { |number, index| [number, index.next] }.to_h
 

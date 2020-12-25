@@ -1,76 +1,24 @@
 require 'set'
+require_relative '../read_input'
 
-DECKS = <<~TEXT.split("\n")
+SAMPLE_INPUT = <<~TEXT
 Player 1:
-10
-39
-16
-32
-5
-46
-47
-45
-48
-26
-36
-27
-24
-37
-49
-25
-30
-13
-23
-1
 9
+2
+6
 3
-31
-14
-4
+1
 
 Player 2:
-2
-15
-29
-41
-11
-21
+5
 8
-44
-38
-19
-12
-20
-40
-17
-22
-35
-34
-42
-50
-6
-33
+4
 7
-18
-28
-43
+10
 TEXT
 
-# DECKS = <<~TEXT.split("\n")
-# Player 1:
-# 9
-# 2
-# 6
-# 3
-# 1
-
-# Player 2:
-# 5
-# 8
-# 4
-# 7
-# 10
-# TEXT
+INPUT = read_input
+DECKS = INPUT.split "\n"
 
 p1_deck = DECKS.take_while { |row| row != '' }.drop(1).map(&:to_i)
 p2_deck = DECKS.drop_while { |row| row != 'Player 2:' }.drop(1).map(&:to_i)

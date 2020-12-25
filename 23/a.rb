@@ -1,6 +1,8 @@
-INPUT = '219748365'
+require_relative '../read_input'
 
-# INPUT = '389125467'
+SAMPLE_INPUT = '389125467'
+
+INPUT = read_input
 
 cups = INPUT.chars.map(&:to_i).each_cons(2).map do |first, second|
   [first, {number: first, next_number: second}]

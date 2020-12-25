@@ -1,14 +1,13 @@
-INPUT = <<~TEXT.split("\n")
-8458505
-16050997
+require_relative '../read_input'
+
+SAMPLE_INPUT = <<~TEXT
+5764801
+17807724
 TEXT
 
-# INPUT = <<~TEXT.split("\n")
-# 5764801
-# 17807724
-# TEXT
+INPUT = read_input
 
-card_public_key, door_public_key = INPUT.map(&:to_i)
+card_public_key, door_public_key = INPUT.split.map(&:to_i)
 
 current = 1
 door_loop = 1
