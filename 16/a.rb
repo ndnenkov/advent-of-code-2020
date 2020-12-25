@@ -1,4 +1,4 @@
-TICKETS = <<~TEXT.split("\n")
+INPUT = <<~TEXT
 departure location: 45-535 or 550-961
 departure station: 45-278 or 294-974
 departure platform: 46-121 or 138-965
@@ -264,7 +264,7 @@ nearby tickets:
 326,631,940,409,753,368,438,202,553,446,592,876,818,684,617,843,753,575,800,695
 TEXT
 
-# TICKETS = <<~TEXT.split("\n")
+# INPUT = <<~TEXT
 # class: 1-3 or 5-7
 # row: 6-11 or 33-44
 # seat: 13-40 or 45-50
@@ -279,36 +279,27 @@ TEXT
 # 38,6,12
 # TEXT
 
-FIELDS = TICKETS.take_while { |x| x != "" }.map do |row|
-  x = row.split(": ")
-  name = x.first.to_s
-  # ranges = eval "[*#{row.split(' ', 2).last.gsub('-', '..').gsub(' or', ',').gsub(' ', ' *')}]"
-  ranges = eval "[#{x.last.gsub('-', '..').gsub(' or', ',')}]"
-  {name => ranges}
-end.reduce(&:merge)
+def parse(input)
+  tickets = input.split "\n"
 
-NEARBY = TICKETS.drop_while { |x| x != "nearby tickets:" }.drop(1).map do |row|
-  row.split(',').map(&:to_i)
-end
+  fields = tickets.take_while { |row| row != '' }.map do |row|
+    name, ranges = row.split ': '
 
-scanning_error_rate = 0
+    [name, eval("[#{ranges.gsub('-', '..').gsub(' or', ',')}]")]
+  end.to_h
 
-NEARBY.flatten.each do |number|
-  if FIELDS.values.flatten.none? {|field_range| field_range.include? number}
-    scanning_error_rate += number
+  nearby = tickets.drop_while { |row| row != 'nearby tickets:' }.drop(1).map do |row|
+    row.split(',').map(&:to_i)
   end
+
+  [fields, nearby]
 end
+
+FIELDS, NEARBY = parse INPUT
+
+scanning_error_rate =
+  NEARBY.flatten.select do |number|
+    FIELDS.values.flatten.none? { |field_range| field_range.include? number }
+  end.sum
 
 puts scanning_error_rate
-
-
-
-
-
-
-
-
-
-
-
-

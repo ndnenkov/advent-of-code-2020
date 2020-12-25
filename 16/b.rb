@@ -1,4 +1,4 @@
-TICKETS = <<~TEXT.split("\n")
+INPUT = <<~TEXT
 departure location: 45-535 or 550-961
 departure station: 45-278 or 294-974
 departure platform: 46-121 or 138-965
@@ -264,7 +264,7 @@ nearby tickets:
 326,631,940,409,753,368,438,202,553,446,592,876,818,684,617,843,753,575,800,695
 TEXT
 
-# TICKETS = <<~TEXT.split("\n")
+# INPUT = <<~TEXT
 # class: 0-1 or 4-19
 # row: 0-5 or 8-19
 # seat: 0-13 or 16-19
@@ -278,65 +278,61 @@ TEXT
 # 5,14,9
 # TEXT
 
-FIELDS = TICKETS.take_while { |x| x != "" }.map do |row|
-  x = row.split(": ")
+def parse(input)
+  tickets = input.split "\n"
 
-  name = x.first.to_s
-  ranges = eval "[#{x.last.gsub('-', '..').gsub(' or', ',')}]"
+  fields = tickets.take_while { |row| row != '' }.map do |row|
+    name, ranges = row.split ': '
 
-  {name => ranges}
-end.reduce(&:merge)
+    [name, eval("[#{ranges.gsub('-', '..').gsub(' or', ',')}]")]
+  end.to_h
 
-NEARBY = TICKETS.drop_while { |x| x != "nearby tickets:" }.drop(1).map do |row|
-  row.split(',').map(&:to_i)
+  my_ticket =
+    tickets.drop_while { |row| row != 'your ticket:' }.drop(1).first.split(',').map(&:to_i)
+
+  nearby = tickets.drop_while { |row| row != 'nearby tickets:' }.drop(1).map do |row|
+    row.split(',').map(&:to_i)
+  end
+
+  [fields, my_ticket, nearby]
 end
 
-MY_TICKET = TICKETS.drop_while { |x| x != "your ticket:" }.drop(1).first.split(',').map(&:to_i)
+FIELDS, MY_TICKET, NEARBY = parse INPUT
 
-FIELD_GUESSES = FIELDS.keys.map {|key| [key, (0...MY_TICKET.size).to_a]}.to_h
-
-VALID_NEARBY = []
-
-NEARBY.each do |nearby|
-  if nearby.all? {|n_num| FIELDS.values.flatten.any? {|field_range| field_range.include? n_num} }
-    VALID_NEARBY.push nearby
+valid_nearby = NEARBY.select do |tickets|
+  tickets.all? do |ticket|
+    FIELDS.values.flatten.any? { |field_range| field_range.include? ticket }
   end
 end
 
-VALID_NEARBY.each do |nearby|
-  nearby.each_with_index do |number, index|
+field_guesses = FIELDS.keys.map { |field| [field, (0...MY_TICKET.size).to_a] }.to_h
+valid_nearby.each do |tickets|
+  tickets.each_with_index do |ticket, index|
     FIELDS.each do |name, ranges|
-      unless ranges.any? {|range| range.include? number }
-        FIELD_GUESSES[name].delete index
-      end
+      next if ranges.any? { |range| range.include? ticket }
+
+      field_guesses[name].delete index
     end
   end
 end
 
 loop do
-  sure_guesses = FIELD_GUESSES.values.select {|x| x.size == 1}.flatten
+  sure_guesses = field_guesses.values.select { |numbers| numbers.size == 1 }.flatten
 
-  FIELD_GUESSES.each do |name, inds|
-    next if inds.size == 1
-    FIELD_GUESSES[name] = inds - sure_guesses
+  field_guesses.each do |name, numbers|
+    next if numbers.size == 1
+
+    field_guesses[name] = numbers - sure_guesses
   end
 
-  break if FIELD_GUESSES.values.all? {|vals| vals.size == 1}
+  break if field_guesses.values.all? { |numbers| numbers.size == 1 }
 end
 
 product = 1
-FIELD_GUESSES.each do |name, positionz|
+field_guesses.each do |name, numbers|
   next unless name.start_with? 'departure'
 
-  product *= MY_TICKET[positionz.first]
+  product *= MY_TICKET[numbers.first]
 end
 
 puts product
-
-
-
-
-
-
-
-
