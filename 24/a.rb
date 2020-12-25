@@ -1,5 +1,3 @@
-require 'pp'
-
 INSTRUCTIONS = <<~TEXT.split("\n")
 enwwsenweswweseseswnenewwswseswenw
 nwnwneswwnenwnwnwenenwwnesenenwsenenee
